@@ -1,0 +1,6 @@
+{
+  "name": "JustsMine",
+  "description": "Secure, real-time Bitcoin cloud mining and withdrawal application.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper to check if the caller owns the user record by email
+    function isOwnerByEmail(email) {
+      return isSignedIn() && request.auth.token.email.lower() == email.lower();
+    }
+
+    // Helper to check if the caller is requesting their own document by UID
+    function isOwnerByUid(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      // Allow reading and writing only if the authenticated user's UID matches the document ID,
+      // or if their registered email matches.
+      allow read, write: if isOwnerByUid(userId) || (isSignedIn() && resource.data.email.lower() == request.auth.token.email.lower());
+      allow create: if isSignedIn(); // Allow creation when signing up
+    }
+
+    // --- Mining Contracts ---
+    match /contracts/{contractId} {
+      // Secure contracts: can only read/write if they are the contract owner
+      allow read, write: if isSignedIn() && (resource == null || resource.data.userEmail.lower() == request.auth.token.email.lower() || request.resource.data.userEmail.lower() == request.auth.token.email.lower());
+    }
+
+    // --- Transactions ---
+    match /transactions/{transactionId} {
+      // Secure transactions: can only read or create their own transactions
+      allow read, create: if isSignedIn() && (resource == null || resource.data.userEmail.lower() == request.auth.token.email.lower() || request.resource.data.userEmail.lower() == request.auth.token.email.lower());
+      // Only admin/system processes can update/delete transactions to prevent user tampering with transaction statuses
+      allow update, delete: if false; 
+    }
+
+    // --- Reward Claims ---
+    match /claims/{claimId} {
+      allow read, write: if isSignedIn() && (resource == null || resource.data.userEmail.lower() == request.auth.token.email.lower() || request.resource.data.userEmail.lower() == request.auth.token.email.lower());
+    }
+
+    // --- Activity Logs ---
+    match /activity_logs/{logId} {
+      allow read, create: if isSignedIn() && (resource == null || resource.data.userEmail.lower() == request.auth.token.email.lower() || request.resource.data.userEmail.lower() == request.auth.token.email.lower());
+      allow update, delete: if false; // Security audit trail must be append-only
+    }
+
+    // --- Support Tickets ---
+    match /support_tickets/{ticketId} {
+      allow read, write: if isSignedIn() && (resource == null || resource.data.userEmail.lower() == request.auth.token.email.lower() || request.resource.data.userEmail.lower() == request.auth.token.email.lower());
+    }
+  }
+}

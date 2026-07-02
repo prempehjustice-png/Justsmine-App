@@ -1,0 +1,80 @@
+{
+  "project_configuration": {
+    "auth": {
+      "providers": ["email_password"],
+      "settings": {
+        "email_verification_required": true,
+        "password_policy": {
+          "min_length": 8,
+          "require_lowercase": true,
+          "require_uppercase": true,
+          "require_numeric": true,
+          "require_non_alphanumeric": false
+        }
+      }
+    },
+    "firestore": {
+      "rules_file": "app/firestore.rules",
+      "indexes": [
+        {
+          "collectionGroup": "contracts",
+          "queryScope": "COLLECTION",
+          "fields": [
+            { "fieldPath": "userEmail", "order": "ASCENDING" },
+            { "fieldPath": "purchaseTime", "order": "DESCENDING" }
+          ]
+        },
+        {
+          "collectionGroup": "transactions",
+          "queryScope": "COLLECTION",
+          "fields": [
+            { "fieldPath": "userEmail", "order": "ASCENDING" },
+            { "fieldPath": "timestamp", "order": "DESCENDING" }
+          ]
+        }
+      ]
+    }
+  },
+  "database_schema": {
+    "users": {
+      "description": "User profiles and core mine state",
+      "fields": {
+        "email": "String (lowercase, unique)",
+        "username": "String",
+        "isEmailConfirmed": "Boolean",
+        "btcBalance": "Double (min: 0.0)",
+        "hasFreeContractClaimed": "Boolean",
+        "twoFactorSecret": "String (16-char alphanumeric seed)",
+        "twoFactorEnabled": "Boolean",
+        "biometricEnabled": "Boolean",
+        "kycStatus": "String ('UNVERIFIED' | 'PENDING' | 'VERIFIED')",
+        "referralCode": "String (8-char uppercase)",
+        "referredBy": "String (Nullable, 8-char uppercase)",
+        "totalHashrate": "Double"
+      }
+    },
+    "contracts": {
+      "description": "Active cloud mining packages purchased or claimed by users",
+      "fields": {
+        "userEmail": "String (Foreign key to users.email)",
+        "planName": "String",
+        "hashrate": "Double (TH/s power)",
+        "purchaseTime": "Timestamp (Epoch millis)",
+        "expiryTime": "Timestamp (Epoch millis)"
+      }
+    },
+    "transactions": {
+      "description": "Log of deposits, plans, and Bitget withdrawals",
+      "fields": {
+        "userEmail": "String (Foreign key to users.email)",
+        "type": "String ('DEPOSIT' | 'WITHDRAWAL')",
+        "amount": "Double (BTC)",
+        "currency": "String ('BTC')",
+        "walletAddress": "String",
+        "status": "String ('PENDING' | 'COMPLETED' | 'FAILED' | 'REJECTED')",
+        "timestamp": "Timestamp (Epoch millis)",
+        "txHash": "String"
+      }
+    }
+  }
+}
